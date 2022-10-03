@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <time.h> 
 
 using namespace std;
 
@@ -17,13 +18,13 @@ double V(double y){
 }
 
 //solution exacte
-double u(double x,double y){
-  return sin(2*M_PI*x)*sin(2*M_PI*y);
+double u(double x,double y,double U0,double alpha){
+  return U0*(1+alpha*(1-sin(M_PI/2*x))*(1-cos(2*M_PI*y)));
 }
 
 //second membre
-double f(double x,double y){
-  return -8*M_PI*M_PI*sin(2*M_PI*x)*sin(2*M_PI*y);
+double f(double x,double y,double U0,double alpha){
+  return 4*M_PI*M_PI*alpha*U0*(1-sin(M_PI/2*x))*cos(2*M_PI*y)-M_PI*M_PI/4*alpha*U0*(1-cos(2*M_PI*y))*sin(M_PI/2*x);
 }
 
 
@@ -67,12 +68,15 @@ int main(int argc, char* argv[]){
       }
       else{
         x[i+j*(Ny+2)] = 1.;
-        sol_ex[i+j*(Ny+2)] = u(i*dx,j*dy);
+        sol_ex[i+j*(Ny+2)] = u(i*dx,j*dy,U0,alpha);
       }
-      fx[i+j*(Ny+2)] = f(i*dx,j*dy);
+      fx[i+j*(Ny+2)] = f(i*dx,j*dy,U0,alpha);
     }
   }
 
+  //check time
+  clock_t start,end;
+  start = clock();
 
   //Time loop
   for (int n=0;n<L;n++){
@@ -80,9 +84,11 @@ int main(int argc, char* argv[]){
     for (int i=1;i<Nx+1;i++){
       for (int j=1;j<Ny+1;j++){
         sol[j+i*(Nx+2)] = -coef*(h1*(x[j+i*(Nx+2)-1]+x[j+i*(Nx+2)+1])+h2*(
-        x[j+i*(Nx+2)-(Nx+2)]+x[j+i*(Nx+2)+Nx+2])-fx[j+i*(Nx+2)]);
+        x[j+(i-1)*(Nx+2)]+x[j+(i+1)*(Nx+2)])-fx[j+i*(Nx+2)]);
       }
     }
+
+    end = clock();
 
     // Switch pointers
     double* tmp;
@@ -90,13 +96,13 @@ int main(int argc, char* argv[]){
     x = sol;
     sol = tmp;
   }
+/*
   cout<<"[";
-
   for (int i=0;i<(Nx+2)*(Ny+2);i++){
     cout<<sol[i]<<',';
   }
   cout<<']';
-
+*/
   // Print solution
   ofstream file;
   file.open("jacobi_rezu.dat");
@@ -111,6 +117,7 @@ int main(int argc, char* argv[]){
   }
   err = sqrt(err);
 
+  cout << "Runtime : "<<double(end-start)/CLOCKS_PER_SEC<<"s"<<endl;
   cout << "Absolute error: " << err << endl;
 
   // Memory deallocation
