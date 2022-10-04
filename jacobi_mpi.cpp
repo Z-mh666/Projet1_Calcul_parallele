@@ -19,13 +19,13 @@ double V(double y){
 }
 
 //solution exacte
-double u(double x,double y){
-  return sin(2*M_PI*x)*sin(2*M_PI*y);
+double u(double x,double y,double U0,double alpha){
+  return U0*(1+alpha*(1-sin(M_PI/2*x))*(1-cos(2*M_PI*y)));
 }
 
 //second membre
-double f(double x,double y){
-  return -8*M_PI*M_PI*sin(2*M_PI*x)*sin(2*M_PI*y);
+double f(double x,double y,double U0,double alpha){
+  return 4*M_PI*M_PI*alpha*U0*(1-sin(M_PI/2*x))*cos(2*M_PI*y)-M_PI*M_PI/4*alpha*U0*(1-cos(2*M_PI*y))*sin(M_PI/2*x);
 }
 
 
