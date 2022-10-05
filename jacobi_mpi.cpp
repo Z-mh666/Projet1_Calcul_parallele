@@ -78,9 +78,9 @@ int main(int argc, char* argv[]){
       }
       else{
         x[i+j*(Ny+2)] = 1.;
-        sol_ex[i+j*(Ny+2)] = u(i*dx,j*dy);
+        sol_ex[i+j*(Ny+2)] = u(i*dx,j*dy,U0,alpha);
       }
-      fx[i+j*(Ny+2)] = f(i*dx,j*dy);
+      fx[i+j*(Ny+2)] = f(i*dx,j*dy,U0,alpha);
     }
   }
 
