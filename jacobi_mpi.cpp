@@ -103,15 +103,15 @@ int main(int argc, char* argv[]){
     // MPI Exchanges (with left side)
     MPI_Request reqSendLeft, reqRecvLeft;
     if(myRank > 0){
-      MPI_Isend(&x[n_start],   1, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqSendLeft);
-      MPI_Irecv(&x[n_start-1], 1, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqRecvLeft);
+      MPI_Isend(&x[(Ny+2)*n_start],   Ny+2, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqSendLeft);
+      MPI_Irecv(&x[(Ny+2)*n_start-Ny-2], Ny+2, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqRecvLeft);
     }
     
     // MPI Exchanges (with right side)
     MPI_Request reqSendRight, reqRecvRight;
     if(myRank < nbTasks-1){
-      MPI_Isend(&x[n_end],   1, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqSendRight);
-      MPI_Irecv(&x[n_end+1], 1, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqRecvRight);
+      MPI_Isend(&x[(Ny+2)*n_end],   Ny+2, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqSendRight);
+      MPI_Irecv(&x[(Ny+2)*n_end+Ny+2], Ny+2, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqRecvRight);
     }
     
     // MPI Exchanges (check everything is send/recv)
