@@ -95,23 +95,24 @@ int main(int argc, char* argv[]){
   {
     n_end = Nx;
   }
-
+  int Nloc = n_end - n_start + 1;
+  cout << "[myRank=" <<  myRank << "] " << n_start << " " << n_end << " " << Nloc << endl;
 
   //Time loop
   for (int n=0;n<L;n++){
-
+    //MPI_Status status;
     // MPI Exchanges (with left side)
-    MPI_Request reqSendLeft, reqRecvLeft;
+    MPI_Request reqSendBot, reqRecvBot;
     if(myRank > 0){
-      MPI_Isend(&x[(Ny+2)*n_start],   Ny+2, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqSendLeft);
-      MPI_Irecv(&x[(Ny+2)*n_start-Ny-2], Ny+2, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqRecvLeft);
+      MPI_Isend(&x[n_start*(Ny+2)],   Ny+2, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqSendLeft);
+      MPI_Irecv(&x[n_start*(Ny+2)-Ny-2], Ny+2, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqRecvLeft);
     }
     
     // MPI Exchanges (with right side)
-    MPI_Request reqSendRight, reqRecvRight;
+    MPI_Request reqSendTop, reqRecvTop;
     if(myRank < nbTasks-1){
-      MPI_Isend(&x[(Ny+2)*n_end],   Ny+2, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqSendRight);
-      MPI_Irecv(&x[(Ny+2)*n_end+Ny+2], Ny+2, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqRecvRight);
+      MPI_Isend(&x[n_end*(Ny+2)],  Ny+2, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqSendRight);
+      MPI_Irecv(&x[n_end*(Ny+2)+Ny+2], Ny+2, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqRecvRight);
     }
     
     // MPI Exchanges (check everything is send/recv)
@@ -123,6 +124,7 @@ int main(int argc, char* argv[]){
       MPI_Wait(&reqSendRight, MPI_STATUS_IGNORE);
       MPI_Wait(&reqRecvRight, MPI_STATUS_IGNORE);
     }
+    
     // Spatial loop
     for (int i=n_start;i<=n_end;i++){
       for (int j=1;j<Ny+1;j++){
@@ -158,21 +160,21 @@ int main(int argc, char* argv[]){
       
       if(myRank == 0){
         for(int i=0; i<=Nx+1; i++){
-          file << sol[i] << endl;
+          file << sol[i] << ",";
           err += pow(sol_ex[i]-sol[i],2);
         }
       }
       
       for (int i=n_start; i<=n_end; i++){
         for (int j=0;j<Ny+2;j++){
-          file << sol[j+i*(Nx+2)] << endl;
+          file << sol[j+i*(Nx+2)] <<",";
           err += pow(sol_ex[j+i*(Nx+2)]-sol[j+i*(Nx+2)],2);
         }
       }
       
       if(myRank == (nbTasks-1)){
         for (int i=Nx+2;i>0;i--){
-          file << sol[(Nx+2)*(Ny+2)-i] << endl;
+          file << sol[(Nx+2)*(Ny+2)-i] << ",";
           err += pow(sol_ex[(Nx+2)*(Ny+2)-i]-sol[(Nx+2)*(Ny+2)-i],2);
         }
       }
@@ -200,4 +202,3 @@ int main(int argc, char* argv[]){
 
   return 0;
 }
-
