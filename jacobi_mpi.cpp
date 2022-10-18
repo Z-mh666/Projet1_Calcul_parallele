@@ -67,20 +67,20 @@ int main(int argc, char* argv[]){
   for (int i=0;i<Nx+2;i++){
     for (int j=0;j<Ny+2;j++){
       if((j==0)||(j==Ny+1)||(i==Nx+1)){
-        x[i+j*(Ny+2)] = U0;
-        sol[i+j*(Ny+2)] = U0;
-        sol_ex[i+j*(Ny+2)] = U0;
+        x[i+j*(Nx+2)] = U0;
+        sol[i+j*(Nx+2)] = U0;
+        sol_ex[i+j*(Nx+2)] = U0;
       }
       else if (i==0){
-        x[i+j*(Ny+2)] = U0*(1+alpha*V(j*dy));
-        sol[i+j*(Ny+2)] = U0*(1+alpha*V(j*dy));
-        sol_ex[i+j*(Ny+2)] = U0*(1+alpha*V(j*dy));
+        x[i+j*(Nx+2)] = U0*(1+alpha*V(j*dy));
+        sol[i+j*(Nx+2)] = U0*(1+alpha*V(j*dy));
+        sol_ex[i+j*(Nx+2)] = U0*(1+alpha*V(j*dy));
       }
       else{
-        x[i+j*(Ny+2)] = 1.;
-        sol_ex[i+j*(Ny+2)] = u(i*dx,j*dy,U0,alpha);
+        x[i+j*(Nx+2)] = 1.;
+        sol_ex[i+j*(Nx+2)] = u(i*dx,j*dy,U0,alpha);
       }
-      fx[i+j*(Ny+2)] = f(i*dx,j*dy,U0,alpha);
+      fx[i+j*(Nx+2)] = f(i*dx,j*dy,U0,alpha);
     }
   }
 
@@ -101,35 +101,35 @@ int main(int argc, char* argv[]){
   //Time loop
   for (int n=0;n<L;n++){
     //MPI_Status status;
-    // MPI Exchanges (with left side)
+    // MPI Exchanges (with botton side)
     MPI_Request reqSendBot, reqRecvBot;
     if(myRank > 0){
-      MPI_Isend(&x[n_start*(Ny+2)],   Ny+2, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqSendLeft);
-      MPI_Irecv(&x[n_start*(Ny+2)-Ny-2], Ny+2, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqRecvLeft);
+      MPI_Isend(&x[n_start*(Ny+2)],   Ny+2, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqSendBot);
+      MPI_Irecv(&x[n_start*(Ny+2)-Ny-2], Ny+2, MPI_DOUBLE, myRank-1, 0, MPI_COMM_WORLD, &reqRecvBot);
     }
     
-    // MPI Exchanges (with right side)
+    // MPI Exchanges (with top side)
     MPI_Request reqSendTop, reqRecvTop;
     if(myRank < nbTasks-1){
-      MPI_Isend(&x[n_end*(Ny+2)],  Ny+2, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqSendRight);
-      MPI_Irecv(&x[n_end*(Ny+2)+Ny+2], Ny+2, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqRecvRight);
+      MPI_Isend(&x[n_end*(Ny+2)],  Ny+2, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqSendTop);
+      MPI_Irecv(&x[n_end*(Ny+2)+Ny+2], Ny+2, MPI_DOUBLE, myRank+1, 0, MPI_COMM_WORLD, &reqRecvTop);
     }
     
     // MPI Exchanges (check everything is send/recv)
     if(myRank > 0){
-      MPI_Wait(&reqSendLeft, MPI_STATUS_IGNORE);
-      MPI_Wait(&reqRecvLeft, MPI_STATUS_IGNORE);
+      MPI_Wait(&reqSendBot, MPI_STATUS_IGNORE);
+      MPI_Wait(&reqRecvBot, MPI_STATUS_IGNORE);
     }
     if(myRank < nbTasks-1){
-      MPI_Wait(&reqSendRight, MPI_STATUS_IGNORE);
-      MPI_Wait(&reqRecvRight, MPI_STATUS_IGNORE);
+      MPI_Wait(&reqSendTop, MPI_STATUS_IGNORE);
+      MPI_Wait(&reqRecvTop, MPI_STATUS_IGNORE);
     }
     
     // Spatial loop
     for (int i=n_start;i<=n_end;i++){
       for (int j=1;j<Ny+1;j++){
-        sol[j+i*(Nx+2)] = -coef*(h1*(x[j+i*(Nx+2)-1]+x[j+i*(Nx+2)+1])+h2*(
-        x[j+i*(Nx+2)-(Nx+2)]+x[j+i*(Nx+2)+Nx+2])-fx[j+i*(Nx+2)]);
+        sol[j+i*(Ny+2)] = -coef*(h1*(x[j+i*(Ny+2)-1]+x[j+i*(Ny+2)+1])+h2*(
+        x[j+i*(Ny+2)-(Nx+2)]+x[j+i*(Ny+2)+Nx+2])-fx[j+i*(Ny+2)]);
       }
     }
 
@@ -159,6 +159,7 @@ int main(int argc, char* argv[]){
       }
       
       if(myRank == 0){
+        file << '[';
         for(int i=0; i<=Nx+1; i++){
           file << sol[i] << ",";
           err += pow(sol_ex[i]-sol[i],2);
@@ -167,16 +168,17 @@ int main(int argc, char* argv[]){
       
       for (int i=n_start; i<=n_end; i++){
         for (int j=0;j<Ny+2;j++){
-          file << sol[j+i*(Nx+2)] <<",";
-          err += pow(sol_ex[j+i*(Nx+2)]-sol[j+i*(Nx+2)],2);
+          file << sol[j+i*(Ny+2)] <<",";
+          err += pow(sol_ex[j+i*(Ny+2)]-sol[j+i*(Nx+2)],2);
         }
       }
       
       if(myRank == (nbTasks-1)){
-        for (int i=Nx+2;i>0;i--){
+        for (int i=Nx+2;i>1;i--){
           file << sol[(Nx+2)*(Ny+2)-i] << ",";
           err += pow(sol_ex[(Nx+2)*(Ny+2)-i]-sol[(Nx+2)*(Ny+2)-i],2);
         }
+        file << sol[(Nx+2)*(Ny+2)-1] << ']' << endl;
       }
       
       file.close();
