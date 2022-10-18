@@ -49,7 +49,7 @@ int main(int argc, char* argv[]){
   double* sol_ex = new double[(Nx+2)*(Ny+2)];  //solution exacte
   double* x = new double[(Nx+2)*(Ny+2)];  //vecteur initial
   double coef = 1./(-2.*h1-2.*h2);  //coefficients diagonaux
-  double err;  //erreur
+  double err = 0;  //erreur
   double U0 = 0.5;
   double alpha = 0.5;
 
@@ -57,20 +57,20 @@ int main(int argc, char* argv[]){
   for (int i=0;i<Nx+2;i++){
     for (int j=0;j<Ny+2;j++){
       if((j==0)||(j==Ny+1)||(i==Nx+1)){
-        x[i+j*(Ny+2)] = U0;
-        sol[i+j*(Ny+2)] = U0;
-        sol_ex[i+j*(Ny+2)] = U0;
+        x[i+j*(Nx+2)] = U0;
+        sol[i+j*(Nx+2)] = U0;
+        sol_ex[i+j*(Nx+2)] = U0;
       }
       else if (i==0){
-        x[i+j*(Ny+2)] = U0*(1+alpha*V(j*dy));
-        sol[i+j*(Ny+2)] = U0*(1+alpha*V(j*dy));
-        sol_ex[i+j*(Ny+2)] = U0*(1+alpha*V(j*dy));
+        x[i+j*(Nx+2)] = U0*(1+alpha*V(j*dy));
+        sol[i+j*(Nx+2)] = U0*(1+alpha*V(j*dy));
+        sol_ex[i+j*(Nx+2)] = U0*(1+alpha*V(j*dy));
       }
       else{
-        x[i+j*(Ny+2)] = 1.;
-        sol_ex[i+j*(Ny+2)] = u(i*dx,j*dy,U0,alpha);
+        x[i+j*(Nx+2)] = 1.;    //vecteur initial
+        sol_ex[i+j*(Nx+2)] = u(i*dx,j*dy,U0,alpha);
       }
-      fx[i+j*(Ny+2)] = f(i*dx,j*dy,U0,alpha);
+      fx[i+j*(Nx+2)] = f(i*dx,j*dy,U0,alpha);
     }
   }
 
@@ -83,12 +83,12 @@ int main(int argc, char* argv[]){
     // Spatial loop
     for (int i=1;i<Nx+1;i++){
       for (int j=1;j<Ny+1;j++){
-        sol[j+i*(Nx+2)] = -coef*(h1*(x[j+i*(Nx+2)-1]+x[j+i*(Nx+2)+1])+h2*(
-        x[j+(i-1)*(Nx+2)]+x[j+(i+1)*(Nx+2)])-fx[j+i*(Nx+2)]);
+        sol[i+j*(Nx+2)] = -coef*(h1*(x[i+j*(Nx+2)-1]+x[i+j*(Nx+2)+1])+h2*(
+        x[i+j*(Nx+2)-(Nx+2)]+x[i+j*(Nx+2)+Nx+2])-fx[i+j*(Nx+2)]);
       }
     }
 
-    end = clock();
+    
 
     // Switch pointers
     double* tmp;
@@ -96,19 +96,16 @@ int main(int argc, char* argv[]){
     x = sol;
     sol = tmp;
   }
-/*
-  cout<<"[";
-  for (int i=0;i<(Nx+2)*(Ny+2);i++){
-    cout<<sol[i]<<',';
-  }
-  cout<<']';
-*/
+  end = clock();
+
   // Print solution
   ofstream file;
   file.open("jacobi_rezu.dat");
-  for (int n=0; n<(Nx+2)*(Ny+2); n++){
-    file << sol[n] << endl;
+  file << '[';
+  for (int n=0; n<(Nx+2)*(Ny+2)-1; n++){
+    file << sol[n] << ',';
   }
+  file << sol[(Nx+2)*(Ny+2)-1] << ']' << endl;
   file.close();
 
   //calcul d'erreur
