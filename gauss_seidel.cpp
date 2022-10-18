@@ -57,20 +57,20 @@ int main(int argc, char* argv[]){
   for (int i=0;i<Nx+2;i++){
     for (int j=0;j<Ny+2;j++){
       if((j==0)||(j==Ny+1)||(i==Nx+1)){
-        x[i+j*(Ny+2)] = U0;
-        sol[i+j*(Ny+2)] = U0;
-        sol_ex[i+j*(Ny+2)] = U0;
+        x[i+j*(Nx+2)] = U0;
+        sol[i+j*(Nx+2)] = U0;
+        sol_ex[i+j*(Nx+2)] = U0;
       }
       else if (i==0){
-        x[i+j*(Ny+2)] = U0*(1+alpha*V(j*dy));
-        sol[i+j*(Ny+2)] = U0*(1+alpha*V(j*dy));
-        sol_ex[i+j*(Ny+2)] = U0*(1+alpha*V(j*dy));
+        x[i+j*(Nx+2)] = U0*(1+alpha*V(j*dy));
+        sol[i+j*(Nx+2)] = U0*(1+alpha*V(j*dy));
+        sol_ex[i+j*(Nx+2)] = U0*(1+alpha*V(j*dy));
       }
       else{
-        x[i+j*(Ny+2)] = 1.;
-        sol_ex[i+j*(Ny+2)] = u(i*dx,j*dy,U0,alpha);
+        x[i+j*(Nx+2)] = 1.;
+        sol_ex[i+j*(Nx+2)] = u(i*dx,j*dy,U0,alpha);
       }
-      fx[i+j*(Ny+2)] = f(i*dx,j*dy,U0,alpha);
+      fx[i+j*(Nx+2)] = f(i*dx,j*dy,U0,alpha);
     }
   }
 
@@ -81,14 +81,26 @@ int main(int argc, char* argv[]){
   //Time loop
   for (int n=0;n<L;n++){
     // Spatial loop
+
+    //red points
     for (int i=1;i<Nx+1;i++){
       for (int j=1;j<Ny+1;j++){
-        sol[j+i*(Nx+2)] = -coef*(h1*(sol[j+i*(Nx+2)-1]+x[j+i*(Nx+2)+1])+h2*(
-        sol[j+(i-1)*(Nx+2)]+x[j+(i+1)*(Nx+2)])-fx[j+i*(Nx+2)]);
+        if (((i%2==1)&&(j%2==1)) || ((i%2==0)&&(j%2==0))){
+          sol[j+i*(Ny+2)] = -coef*(h1*(x[j+i*(Ny+2)-1]+x[j+i*(Ny+2)+1])+h2*(
+          x[j+(i-1)*(Ny+2)]+x[j+(i+1)*(Ny+2)])-fx[j+i*(Ny+2)]);
+        }
       }
     }
 
-    end = clock();
+    //black points
+    for (int i=1;i<Nx+1;i++){
+      for (int j=1;j<Ny+1;j++){
+        if (((i%2==0)&&(j%2==1)) || ((i%2==1)&&(j%2==0))){
+          sol[j+i*(Ny+2)] = -coef*(h1*(x[j+i*(Ny+2)-1]+x[j+i*(Ny+2)+1])+h2*(
+          x[j+(i-1)*(Ny+2)]+x[j+(i+1)*(Ny+2)])-fx[j+i*(Ny+2)]);
+        }
+      }
+    }
 
     // Switch pointers
     double* tmp;
@@ -96,20 +108,18 @@ int main(int argc, char* argv[]){
     x = sol;
     sol = tmp;
   }
-/*
-  cout<<"[";
-  for (int i=0;i<(Nx+2)*(Ny+2);i++){
-    cout<<sol[i]<<',';
-  }
-  cout<<']';
-*/
+
+  //check time
+  end = clock();  
+
   // Print solution
   ofstream file;
   file.open("gauss_rezu.dat");
-  for (int n=0; n<(Nx+2)*(Ny+2); n++){
-    file << sol[n] << endl;
+  file << '[';
+  for (int n=0; n<(Nx+2)*(Ny+2)-1; n++){
+    file << sol[n] << ',';
   }
-  file.close();
+  file << sol[(Nx+2)*(Ny+2)-1] << ']' << endl;
 
   //calcul d'erreur
   for (int i=0;i<(Nx+2)*(Ny+2);i++){
