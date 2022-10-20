@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 #include <cmath>
 #include <time.h> 
 
@@ -49,7 +50,9 @@ int main(int argc, char* argv[]){
   double* sol_ex = new double[(Nx+2)*(Ny+2)];  //solution exacte
   double* x = new double[(Nx+2)*(Ny+2)];  //vecteur initial
   double coef = 1./(-2.*h1-2.*h2);  //coefficients diagonaux
-  double err;  //erreur
+  double err = 0;  //erreur
+  double sol_norm = 0;  //norme de la solution
+  double err_rel; //erreur relatif
   double U0 = 0.5;
   double alpha = 0.5;
 
@@ -124,8 +127,11 @@ int main(int argc, char* argv[]){
   //calcul d'erreur
   for (int i=0;i<(Nx+2)*(Ny+2);i++){
     err += (sol_ex[i]-sol[i])*(sol_ex[i]-sol[i]);
+    sol_norm += sol_ex[i]*sol_ex[i];
   }
   err = sqrt(err);
+  sol_norm = sqrt(sol_norm);
+  err_rel = err/sol_norm;
 
   cout << "Runtime : "<<double(end-start)/CLOCKS_PER_SEC<<"s"<<endl;
   cout << "Absolute error: " << err << endl;
