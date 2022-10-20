@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 #include <sstream>
 #include <mpi.h>
 
