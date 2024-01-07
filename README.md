@@ -1,1 +1,1 @@
-This project aims to solve the problem Ax=b by inverting the matrix in C++ using the Jacobi and Gauss-Seidel methods. Additionally, the objective is to parallelize the loop (1D) in these methods.
+This project aims to code the appraoch solution of a PDE by using the finite difference method and solve the problem Ax=b by inverting the matrix in C++ using the Jacobi and Gauss-Seidel methods. Additionally, the objective is to parallelize the loop (1D) in these methods.
